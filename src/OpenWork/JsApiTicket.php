@@ -30,8 +30,8 @@ class JsApiTicket
     public function __construct(
         protected string $corpId,
         protected ?string $key = null,
-        CacheInterface $cache = null,
-        HttpClientInterface $httpClient = null
+        ?CacheInterface $cache = null,
+        ?HttpClientInterface $httpClient = null
     ) {
         $this->httpClient = $httpClient ?? HttpClient::create(['base_uri' => 'https://qyapi.weixin.qq.com/']);
         $this->cache = $cache ?? new Psr16Cache(new FilesystemAdapter(namespace: 'easywechat', defaultLifetime: 1500));
@@ -81,7 +81,7 @@ class JsApiTicket
         $key = $this->getKey();
         $ticket = $this->cache->get($key);
 
-        if ((bool) $ticket && is_string($ticket)) {
+        if ($ticket && is_string($ticket)) {
             return $ticket;
         }
 
@@ -143,7 +143,7 @@ class JsApiTicket
         $key = $this->getAgentKey($agentId);
         $ticket = $this->cache->get($key);
 
-        if ((bool) $ticket && is_string($ticket)) {
+        if ($ticket && is_string($ticket)) {
             return $ticket;
         }
 

@@ -6,7 +6,6 @@ use const PHP_OUTPUT_HANDLER_CLEANABLE;
 use const PHP_OUTPUT_HANDLER_FLUSHABLE;
 use const PHP_OUTPUT_HANDLER_REMOVABLE;
 
-use JetBrains\PhpStorm\Pure;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 
@@ -25,7 +24,6 @@ class ServerResponse implements ResponseInterface
         $this->response->getBody()->rewind();
     }
 
-    #[Pure]
     public static function make(ResponseInterface $response): ServerResponse
     {
         if ($response instanceof ServerResponse) {
@@ -134,7 +132,7 @@ class ServerResponse implements ResponseInterface
         }
 
         foreach ($this->getHeaders() as $name => $values) {
-            $replace = 0 === \strcasecmp($name, 'Content-Type');
+            $replace = \strcasecmp($name, 'Content-Type') === 0;
 
             foreach ($values as $value) {
                 header($name.': '.$value, $replace, $this->getStatusCode());

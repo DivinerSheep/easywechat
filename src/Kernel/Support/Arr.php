@@ -10,9 +10,6 @@ use function is_string;
 
 class Arr
 {
-    /**
-     * @param  mixed  $default
-     */
     #[Pure]
     public static function get(mixed $array, string|int|null $key, mixed $default = null): mixed
     {
@@ -29,9 +26,7 @@ class Arr
         }
 
         foreach (explode('.', (string) $key) as $segment) {
-            /** @phpstan-ignore-next-line */
-            if (static::exists($array, $segment)) {
-                /** @phpstan-ignore-next-line */
+            if (is_array($array) && static::exists($array, $segment)) {
                 $array = $array[$segment];
             } else {
                 return $default;
@@ -51,7 +46,7 @@ class Arr
 
     /**
      * @param  array<string|int, mixed>  $array
-     * @return array<string|int, mixed>
+     * @return array<string, mixed>
      */
     public static function set(array &$array, string|int|null $key, mixed $value): array
     {
@@ -115,7 +110,7 @@ class Arr
             return false;
         }
 
-        if ([] === $keys) {
+        if ($keys === []) {
             return false;
         }
 

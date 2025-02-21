@@ -104,14 +104,14 @@ class RequestUtil
     }
 
     /**
-     * @param  array<string, array<string,mixed>|mixed>  $options
-     * @return array<string, array|mixed>
+     * @param  array{headers?:array<string, string>, xml?:mixed, body?:array|string, json?:mixed}  $options
+     * @return array{headers?:array<string, string|array<string, string>|array<string>>, xml?:array|string, body?:array|string}
      */
     public static function formatBody(array $options): array
     {
         $contentType = $options['headers']['Content-Type'] ?? $options['headers']['content-type'] ?? null;
 
-        if (isset($options['xml'])) {
+        if (array_key_exists('xml', $options)) {
             if (is_array($options['xml'])) {
                 $options['xml'] = Xml::build($options['xml']);
             }
@@ -121,15 +121,14 @@ class RequestUtil
             }
 
             if (! $contentType) {
-                /** @phpstan-ignore-next-line */
-                $options['headers']['Content-Type'] = [$options['headers'][] = 'Content-Type: text/xml'];
+                $options['headers']['Content-Type'] = 'text/xml';
             }
 
             $options['body'] = $options['xml'];
             unset($options['xml']);
         }
 
-        if (isset($options['json'])) {
+        if (array_key_exists('json', $options)) {
             if (is_array($options['json'])) {
                 /** XXX: 微信的 JSON 是比较奇葩的，比如菜单不能把中文 encode 为 unicode */
                 $options['json'] = json_encode(
@@ -143,8 +142,7 @@ class RequestUtil
             }
 
             if (! $contentType) {
-                /** @phpstan-ignore-next-line */
-                $options['headers']['Content-Type'] = [$options['headers'][] = 'Content-Type: application/json'];
+                $options['headers']['Content-Type'] = 'application/json';
             }
 
             $options['body'] = $options['json'];
@@ -156,7 +154,7 @@ class RequestUtil
 
     public static function createDefaultServerRequest(): ServerRequestInterface
     {
-        $psr17Factory = new Psr17Factory();
+        $psr17Factory = new Psr17Factory;
 
         $creator = new ServerRequestCreator(
             serverRequestFactory: $psr17Factory,

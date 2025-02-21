@@ -36,8 +36,8 @@ class AccessToken implements RefreshableAccessTokenInterface
         protected string $appId,
         protected string $secret,
         protected ?string $key = null,
-        CacheInterface $cache = null,
-        HttpClientInterface $httpClient = null,
+        ?CacheInterface $cache = null,
+        ?HttpClientInterface $httpClient = null,
         protected ?bool $stable = false
     ) {
         $this->httpClient = $httpClient ?? HttpClient::create(['base_uri' => 'https://api.weixin.qq.com/']);
@@ -46,7 +46,7 @@ class AccessToken implements RefreshableAccessTokenInterface
 
     public function getKey(): string
     {
-        return $this->key ?? $this->key = sprintf('%s.access_token.%s.%s', static::CACHE_KEY_PREFIX, $this->appId, $this->secret);
+        return $this->key ?? $this->key = sprintf('%s.access_token.%s.%s.%s', static::CACHE_KEY_PREFIX, $this->appId, $this->secret, (int) $this->stable);
     }
 
     public function setKey(string $key): static
@@ -69,7 +69,7 @@ class AccessToken implements RefreshableAccessTokenInterface
     {
         $token = $this->cache->get($this->getKey());
 
-        if ((bool) $token && is_string($token)) {
+        if ($token && is_string($token)) {
             return $token;
         }
 
@@ -77,7 +77,7 @@ class AccessToken implements RefreshableAccessTokenInterface
     }
 
     /**
-     * @return array<string, string>
+     * @return array{access_token:string}
      *
      * @throws HttpException
      * @throws InvalidArgumentException

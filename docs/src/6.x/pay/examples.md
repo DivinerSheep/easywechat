@@ -2,8 +2,6 @@
 
 > 👏🏻 欢迎点击本页下方 "帮助我们改善此页面！" 链接参与贡献更多的使用示例！
 
-
-
 <details>
     <summary>JSAPI 下单</summary>
 
@@ -30,7 +28,6 @@ $response = $app->getClient()->postJson("v3/pay/transactions/jsapi", [
 
 </details>
 
-
 <details>
     <summary>Native 下单</summary>
 
@@ -49,8 +46,8 @@ $response = $app->getClient()->postJson('v3/pay/transactions/native', [
 
 print_r($response->toArray(false));
 ```
-</details>
 
+</details>
 
 <details>
     <summary>查询订单（商户订单号）</summary>
@@ -66,8 +63,8 @@ $response = $app->getClient()->get("v3/pay/transactions/out-trade-no/{$outTradeN
 
 print_r($response->toArray());
 ```
-</details>
 
+</details>
 
 <details>
     <summary>查询订单（微信订单号）</summary>
@@ -82,6 +79,7 @@ $response = $app->getClient()->get("pay/transactions/id/{$transactionId}", [
 
 print_r($response->toArray());
 ```
+
 </details>
 
 <details>
@@ -118,6 +116,7 @@ Route::post('payment_notify', function () {
     return $server->serve();
 });
 ```
+
 </details>
   
 <details>
@@ -141,6 +140,74 @@ $response = $api->post('/mmpaymkttransfers/promotion/transfers', [
 
 print_r($response->toArray());
 ```
+
+</details>
+
+<details>
+   <summary>JSAPI下单（服务商）</summary>
+
+> 官方文档：<[https://pay.weixin.qq.com/wiki/doc/apiv3/apis/chapter3_1_1.shtml](https://pay.weixin.qq.com/docs/partner/apis/partner-jsapi-payment/partner-jsons/partner-jsapi-prepay.html)>
+
+```php
+ $response = $app->getClient()->postJson("v3/pay/partner/transactions/jsapi", [
+            "sp_appid" => $appId, // 服务商应用ID
+            "sp_mchid" => '********', // 服务商户号
+            'sub_mchid' => '*********', // 子商户号/二级商户号
+            "sub_appid" => '********', // 子商户/二级商户应用ID(选填)
+            "description" => $this->payDesc($from), // 商品描述
+            "out_trade_no" => $order['pay_sn'], // 商户订单号
+            "notify_url" => $this->config['notify_url'], // 通知地址
+            "amount" => [
+                "total" => intval($order['order_amount'] * 100), // 总金额
+            ], // 订单金额信息
+            "payer" => [
+                "sp_openid" => $this->auth['openid'], // 用户服务标识，户在服务商AppID下的唯一标识
+                "sub_openid" => $this->auth['openid'] // 用户子标识，用户在子商户AppID下的唯一标识。若传sub_openid，那sub_appid必填。下单前需获取到用户的OpenID
+            ], // 支付者,(sp_openid 和 sub_openid 二选一)
+            'attach' => $from
+        ]);
+
+print_r($response->toArray());
+```
+
+</details>
+
+<details>
+    <summary>敏感信息加密  <version-tag>6.17.0+</version-tag> </summary>
+
+> 官方文档：<https://pay.weixin.qq.com/doc/v3/merchant/4013053257>
+> 使用默认公钥 ID
+
+```php
+$utils = $app->getUtils();
+$response = $app->getClient()->withSerialHeader()->postJson("v3/applyment4sub/applyment/", [
+   "business_code" => "12345678",
+   'contact_info'  => [
+        'contact_name'      => $utils->encryptWithRsaPublicKey('张三'),
+        //...
+    ],
+    //...
+]);
+
+print_r($response->toArray());
+```
+
+或指定公钥 ID
+
+```php
+$utils = $app->getUtils();
+$response = $app->getClient()->withSerialHeader("PUB_KEY_ID_123456")->postJson("v3/applyment4sub/applyment/", [
+   "business_code" => "12345678",
+   'contact_info'  => [
+        'contact_name'      => $utils->encryptWithRsaPublicKey("张三","PUB_KEY_ID_123456"),
+        //...
+    ],
+    //...
+]);
+
+print_r($response->toArray());
+```
+
 </details>
   
 <!--

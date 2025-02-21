@@ -22,9 +22,9 @@ class File extends DataPart
      */
     public static function from(
         string $pathOrContents,
-        string $filename = null,
-        string $contentType = null,
-        string $encoding = null
+        ?string $filename = null,
+        ?string $contentType = null,
+        ?string $encoding = null
     ): DataPart {
         if (file_exists($pathOrContents)) {
             return static::fromPath($pathOrContents, $filename, $contentType);
@@ -38,12 +38,12 @@ class File extends DataPart
      */
     public static function fromContents(
         string $contents,
-        string $filename = null,
-        string $contentType = null,
-        string $encoding = null
+        ?string $filename = null,
+        ?string $contentType = null,
+        ?string $encoding = null
     ): DataPart {
-        if (null === $contentType) {
-            $mimeTypes = new MimeTypes();
+        if ($contentType === null) {
+            $mimeTypes = new MimeTypes;
 
             if ($filename) {
                 $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
@@ -70,10 +70,10 @@ class File extends DataPart
      */
     public static function withContents(
         string $contents,
-        string $filename = null,
-        string $contentType = null,
-        string $encoding = null
+        ?string $filename = null,
+        ?string $contentType = null,
+        ?string $encoding = null
     ): DataPart {
-        return self::fromContents(...func_get_args());
+        return self::fromContents($contents, $filename, $contentType, $encoding);
     }
 }

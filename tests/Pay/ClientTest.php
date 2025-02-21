@@ -45,7 +45,7 @@ class ClientTest extends TestCase
 
         $this->assertSame('POST', $client->getRequestMethod());
         $this->assertSame('https://api.mch.weixin.qq.com/certificates', $client->getRequestUrl());
-        $this->assertSame('Content-Type: text/xml', $client->getRequestOptions()['headers'][1]);
+        $this->assertContains('Content-Type: text/xml', $client->getRequestOptions()['headers']);
         $this->assertSame(Xml::build(['foo' => 'bar', 'sign' => 'mock-signature']), $client->getRequestOptions()['body']);
     }
 
@@ -61,7 +61,7 @@ class ClientTest extends TestCase
 
         $this->assertSame('POST', $client->getRequestMethod());
         $this->assertSame('https://api.mch.weixin.qq.com/certificates', $client->getRequestUrl());
-        $this->assertSame('Content-Type: text/xml', $client->getRequestOptions()['headers'][1]);
+        $this->assertContains('Content-Type: text/xml', $client->getRequestOptions()['headers']);
         $this->assertSame(Xml::build(['foo' => 'bar', 'sign' => 'mock-signature']), $client->getRequestOptions()['body']);
     }
 
@@ -77,7 +77,7 @@ class ClientTest extends TestCase
 
         $this->assertSame('POST', $client->getRequestMethod());
         $this->assertSame('https://api.mch.weixin.qq.com/certificates', $client->getRequestUrl());
-        $this->assertSame('Content-Type: text/xml', $client->getRequestOptions()['headers'][1]);
+        $this->assertContains('Content-Type: text/xml', $client->getRequestOptions()['headers']);
         $this->assertSame(Xml::build(['foo' => 'bar', 'sign' => 'mock-signature']), $client->getRequestOptions()['body']);
     }
 
@@ -94,7 +94,7 @@ class ClientTest extends TestCase
 
         $this->assertSame('POST', $client->getRequestMethod());
         $this->assertSame('https://api.mch.weixin.qq.com/certificates', $client->getRequestUrl());
-        $this->assertSame('Content-Type: text/xml', $client->getRequestOptions()['headers'][1]);
+        $this->assertContains('Content-Type: text/xml', $client->getRequestOptions()['headers']);
         $this->assertSame('<xml><foo>bar</foo><sign>mock-signature</sign></xml>', $client->getRequestOptions()['body']);
 
         // XML string will not attach signature
@@ -106,7 +106,7 @@ class ClientTest extends TestCase
 
         $this->assertSame('POST', $client->getRequestMethod());
         $this->assertSame('https://api.mch.weixin.qq.com/certificates', $client->getRequestUrl());
-        $this->assertSame('Content-Type: text/xml', $client->getRequestOptions()['headers'][1]);
+        $this->assertContains('Content-Type: text/xml', $client->getRequestOptions()['headers']);
         $this->assertSame(Xml::build(['foo' => 'bar']), $client->getRequestOptions()['body']);
     }
 
@@ -122,8 +122,25 @@ class ClientTest extends TestCase
 
         $this->assertSame('POST', $client->getRequestMethod());
         $this->assertSame('https://api.mch.weixin.qq.com/certificates', $client->getRequestUrl());
-        $this->assertSame('Content-Type: text/xml', $client->getRequestOptions()['headers'][1]);
+        $this->assertContains('Content-Type: text/xml', $client->getRequestOptions()['headers']);
         $this->assertSame(Xml::build(['foo' => 'bar']), $client->getRequestOptions()['body']);
+    }
+
+    public function test_v2_request_appauth_getaccesstoken()
+    {
+        $client = Client::mock('{"retcode":-1,"access_token":"mock-token"}', 200, ['Content-Type' => 'application/json']);
+        $client->shouldReceive('createSignature')->never();
+        $client->shouldReceive('isV3Request')->andReturn(false);
+        $client->shouldReceive('attachLegacySignature')->with([
+            'foo' => 'bar',
+        ])->andReturn(['foo' => 'bar', 'sign' => 'mock-signature']);
+
+        $response = $client->get('/appauth/getaccesstoken', ['query' => ['foo' => 'bar']]);
+
+        $this->assertSame('GET', $client->getRequestMethod());
+        $this->assertEquals(['foo' => 'bar', 'sign' => 'mock-signature'], $client->getRequestOptions()['query']);
+        $this->assertSame('https://api.mch.weixin.qq.com/appauth/getaccesstoken?foo=bar&sign=mock-signature', $client->getRequestUrl());
+        $this->assertContains('Content-Type: text/xml', $client->getRequestOptions()['headers']);
     }
 
     public function test_v3_upload_media()
@@ -154,5 +171,17 @@ class ClientTest extends TestCase
         )->andReturn($response);
 
         $this->assertSame($response, $client->uploadMedia('/v3/merchant/media/upload', './tests/fixtures/files/image.jpg'));
+    }
+
+    public function test_v3_with_serial_header()
+    {
+        $client = Client::mock();
+        $client->shouldReceive('createSignature')->never();
+        $client->shouldReceive('attachLegacySignature')->with([
+            'foo' => 'bar',
+        ])->andReturn(['foo' => 'bar', 'sign' => 'mock-signature']);
+
+        $client->withSerialHeader()->post('certificates', ['body' => Xml::build(['foo' => 'bar'])]);
+        $this->assertSame('Wechatpay-Serial: PUB_KEY_ID_MOCK', $client->getRequestOptions()['headers'][0]);
     }
 }

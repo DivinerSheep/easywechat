@@ -27,8 +27,8 @@ class ProviderAccessToken implements RefreshableAccessTokenInterface
         protected string $corpId,
         protected string $providerSecret,
         protected ?string $key = null,
-        CacheInterface $cache = null,
-        HttpClientInterface $httpClient = null,
+        ?CacheInterface $cache = null,
+        ?HttpClientInterface $httpClient = null,
     ) {
         $this->httpClient = $httpClient ?? HttpClient::create(['base_uri' => 'https://qyapi.weixin.qq.com/']);
         $this->cache = $cache ?? new Psr16Cache(new FilesystemAdapter(namespace: 'easywechat', defaultLifetime: 1500));
@@ -59,7 +59,7 @@ class ProviderAccessToken implements RefreshableAccessTokenInterface
     {
         $token = $this->cache->get($this->getKey());
 
-        if ((bool) $token && \is_string($token)) {
+        if ($token && \is_string($token)) {
             return $token;
         }
 

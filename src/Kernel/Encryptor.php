@@ -14,6 +14,7 @@ use EasyWeChat\Kernel\Support\Xml;
 use Exception;
 use Throwable;
 
+use function array_map;
 use function base64_decode;
 use function base64_encode;
 use function implode;
@@ -57,6 +58,8 @@ class Encryptor
 
     public const ERROR_XML_BUILD = -40011; // XML build failed
 
+    public const ERROR_JSON_BUILD = -40012; // JOSN build failed
+
     public const ILLEGAL_BUFFER = -41003; // Illegal buffer
 
     /** AES block size in bytes */
@@ -87,14 +90,13 @@ class Encryptor
      * @throws RuntimeException
      * @throws Exception
      */
-    public function encrypt(string $plaintext, ?string $nonce = null, int|string|null $timestamp = null): string
+    public function encrypt(string $plaintext, ?string $nonce = null, int|string|null $timestamp = null, string $messageType = 'xml'): string
     {
-        return $this->encryptAsXml($plaintext, $nonce, $timestamp);
+        return $messageType === 'xml' ?
+            $this->encryptAsXml($plaintext, $nonce, $timestamp) :
+            $this->encryptAsJson($plaintext, $nonce, $timestamp);
     }
 
-    /**
-     * @throws \EasyWeChat\Kernel\Exceptions\RuntimeException
-     */
     public function encryptAsXml(string $plaintext, ?string $nonce = null, int|string|null $timestamp = null): string
     {
         $encrypted = $this->encryptAsArray($plaintext, $nonce, $timestamp);
@@ -109,8 +111,28 @@ class Encryptor
         return Xml::build($response);
     }
 
+    public function encryptAsJson(string $plaintext, ?string $nonce = null, int|string|null $timestamp = null): string
+    {
+        $encrypted = $this->encryptAsArray($plaintext, $nonce, $timestamp);
+
+        $response = [
+            'encrypt' => $encrypted['ciphertext'],
+            'msgsignature' => $encrypted['signature'],
+            'timestamp' => $encrypted['timestamp'],
+            'nonce' => $encrypted['nonce'],
+        ];
+
+        $jsonStr = json_encode($response, JSON_UNESCAPED_UNICODE);
+
+        if ($jsonStr === false) {
+            throw new RuntimeException('Invalid json data.', self::ERROR_JSON_BUILD);
+        }
+
+        return $jsonStr;
+    }
+
     /**
-     * @throws \EasyWeChat\Kernel\Exceptions\RuntimeException
+     * @throws RuntimeException
      */
     public function encryptAsArray(string $plaintext, ?string $nonce = null, int|string|null $timestamp = null): array
     {
@@ -143,11 +165,16 @@ class Encryptor
         ];
     }
 
-    public function createSignature(mixed ...$attributes): string
+    public function createSignature(string|int ...$attributes): string
     {
+        $attributes = array_map(
+            static fn (string|int $attribute): string => (string) $attribute,
+            $attributes
+        );
+
         sort($attributes, SORT_STRING);
 
-        return sha1(implode($attributes));
+        return sha1(implode('', $attributes));
     }
 
     /**

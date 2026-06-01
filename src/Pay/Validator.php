@@ -9,7 +9,7 @@ use EasyWeChat\Pay\Contracts\Merchant as MerchantInterface;
 use EasyWeChat\Pay\Exceptions\InvalidSignatureException;
 use Psr\Http\Message\MessageInterface;
 
-class Validator implements \EasyWeChat\Pay\Contracts\Validator
+class Validator implements Contracts\Validator
 {
     public const MAX_ALLOWED_CLOCK_OFFSET = 300;
 
@@ -26,8 +26,8 @@ class Validator implements \EasyWeChat\Pay\Contracts\Validator
     }
 
     /**
-     * @throws \EasyWeChat\Kernel\Exceptions\InvalidConfigException
-     * @throws \EasyWeChat\Pay\Exceptions\InvalidSignatureException
+     * @throws InvalidConfigException
+     * @throws InvalidSignatureException
      */
     public function validate(MessageInterface $message): void
     {

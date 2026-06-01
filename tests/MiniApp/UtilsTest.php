@@ -2,9 +2,11 @@
 
 namespace EasyWeChat\Tests\MiniApp;
 
+use EasyWeChat\Kernel\Exceptions\HttpException;
 use EasyWeChat\MiniApp\Application;
 use EasyWeChat\MiniApp\Utils;
 use EasyWeChat\Tests\TestCase;
+use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -85,5 +87,75 @@ class UtilsTest extends TestCase
                 'appid' => 'wx4f4bc4dec97d474b',
             ],
         ], $utils->decryptSession($sessionKey, $iv, $encryptedData));
+    }
+
+    public function test_get_phone_number()
+    {
+        $response = [
+            'errcode' => 0,
+            'errmsg' => 'ok',
+            'phone_info' => [
+                'phoneNumber' => '13800138000',
+                'purePhoneNumber' => '13800138000',
+                'countryCode' => '86',
+                'watermark' => [
+                    'timestamp' => 1637744274,
+                    'appid' => 'xxxx',
+                ],
+            ],
+        ];
+
+        $httpClient = new MockHttpClient([
+            new MockResponse(json_encode($response)),
+        ]);
+
+        $cache = \Mockery::mock(CacheInterface::class);
+        $cache->allows()->get(\Mockery::any())->andReturn('mock-access-token');
+
+        $app = new Application([
+            'app_id' => 'mock-appid',
+            'secret' => 'mock-secret',
+            'token' => 'mock-token',
+            'aes_key' => 'mock-aes_key',
+        ]);
+        $app->setHttpClient($httpClient);
+        $app->setCache($cache);
+
+        $utils = new Utils($app);
+
+        $result = $utils->getPhoneNumber('mock-phone-code');
+
+        $this->assertSame($response, $result);
+    }
+
+    public function test_get_phone_number_with_error()
+    {
+        $this->expectException(HttpException::class);
+        $this->expectExceptionMessage('getPhoneNumber error:');
+
+        $errorResponse = [
+            'errcode' => 40029,
+            'errmsg' => 'invalid code',
+        ];
+
+        $httpClient = new MockHttpClient([
+            new MockResponse(json_encode($errorResponse)),
+        ]);
+
+        $cache = \Mockery::mock(CacheInterface::class);
+        $cache->allows()->get(\Mockery::any())->andReturn('mock-access-token');
+
+        $app = new Application([
+            'app_id' => 'mock-appid',
+            'secret' => 'mock-secret',
+            'token' => 'mock-token',
+            'aes_key' => 'mock-aes_key',
+        ]);
+        $app->setHttpClient($httpClient);
+        $app->setCache($cache);
+
+        $utils = new Utils($app);
+
+        $utils->getPhoneNumber('invalid-code');
     }
 }

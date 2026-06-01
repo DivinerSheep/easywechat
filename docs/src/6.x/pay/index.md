@@ -1,6 +1,6 @@
 # 微信支付
 
-请仔细阅读并理解：[微信官方文档 - 微信支付](https://pay.weixin.qq.com/wiki/doc/apiv3/wxpay/pages/index.shtml)
+请仔细阅读并理解：[微信官方文档 - 微信支付](https://pay.weixin.qq.com/doc/v3/merchant/4012062524)
 
 > [!NOTE]
 > 2024 年 Q3，微信支付官方开启了「微信支付公钥」平替「平台证书」方案，初始化所需的参数仅需配置上 **微信支付公钥 ID** 及 **微信支付公钥** 即完全兼容支持，CLI/API 下载 **平台证书** 已不是一个必要步骤，可略过。
@@ -29,11 +29,11 @@ $config = [
     // 下载工具：https://github.com/wechatpay-apiv3/CertificateDownloader
     'platform_certs' => [
         // 如果是「平台证书」模式
-        //    可简写使用平台证书文件绝对路径
-        // '/path/to/wechatpay/cert.pem',
+        // 使用 Key/Value 结构， key 为 平台证书的序列号，value 为微信支付平台证书的绝对路径
+        // "{SerialNo}" => '/path/to/wechatpay/cert.pem'
 
         // 如果是「微信支付公钥」模式
-        //    使用Key/Value结构， key为微信支付公钥ID，value为微信支付公钥文件绝对路径
+        // 使用 Key/Value 结构， key 为微信支付公钥 ID(PUB_KEY_ID 开头)，value 为微信支付公钥文件绝对路径
         // "{$pubKeyId}" => '/path/to/wechatpay/pubkey.pem',
     ],
 
